@@ -1,0 +1,10 @@
+Flask
+opencensus-ext-azure
+opencensus-ext-flask
+redis
+opencensus
+opencensus-ext-logging
+jinja2
+markupsafe
+six
+setuptools
