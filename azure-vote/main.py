@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect, url_for
 import os
 import random
 import redis
@@ -48,47 +48,70 @@ def index():
 
     if request.method == 'GET':
 
-        # Get current values
-        vote1 = r.get(button1).decode('utf-8')
-        # use tracer object to trace cat vote
-        with telemetry.tracer.span(name="Cats Vote") as span:
-            print("Cats Vote")
-        vote2 = r.get(button2).decode('utf-8')
-        # use tracer object to trace cat vote
-        with telemetry.tracer.span(name="Dogs Vote") as span:
-            print("Dogs Vote")
-        # Return index with values
-        return render_template("index.html", value1=int(vote1), value2=int(vote2), button1=button1, button2=button2, title=title)
+        vote1 = int(r.get(button1).decode('utf-8'))
+        vote2 = int(r.get(button2).decode('utf-8'))
+
+        # Log custom event for retrieving votes
+        with telemetry.tracer.span(name="GET /index - Retrieve Votes") as span:
+            span.add_attribute("Cats Vote", vote1)
+            span.add_attribute("Dogs Vote", vote2)
+
+        telemetry.logger.info("Retrieve Votes", extra={
+            'custom_dimensions': {
+                'Cats Vote': vote1,
+                'Dogs Vote': vote2
+            }
+        })
+        
+        #return render_template("index.html", value1=int(vote1), value2=int(vote2), button1=button1, button2=button2, title=title)
 
     elif request.method == 'POST':
+        vote = request.form.get('vote')
 
-        if request.form['vote'] == 'reset':
+        if vote == 'reset':
 
-            # Empty table and return results
-            r.set(button1,0)
-            r.set(button2,0)
+            # Reset votes
+            r.set(button1, 0)
+            r.set(button2, 0)
             vote1 = r.get(button1).decode('utf-8')
-            properties = {'custom_dimensions': {'Cats Vote': vote1}}
-            telemetry.logger.info('Cats Vote', extra=properties)
-
             vote2 = r.get(button2).decode('utf-8')
-            properties = {'custom_dimensions': {'Dogs Vote': vote2}}
-            telemetry.logger.info('Cats Vote', extra=properties)
+
+            # Log reset event
+            telemetry.logger.info("Reset Votes", extra={
+                'custom_dimensions': {
+                    'Cats Vote': vote1,
+                    'Dogs Vote': vote2
+                }
+            })
 
             return render_template("index.html", value1=int(vote1), value2=int(vote2), button1=button1, button2=button2, title=title)
 
         else:
-
-            # Insert vote result into DB
-            vote = request.form['vote']
+            # Increment the vote count in Redis
             r.incr(vote,1)
 
-            # Get current values
-            vote1 = r.get(button1).decode('utf-8')
-            vote2 = r.get(button2).decode('utf-8')
+            # Log custom event for voting
+            if vote == button1:
+                telemetry.logger.info("Cat Vote", extra={
+                    'custom_dimensions': {
+                        'Vote Type': "Cat",
+                        'Total Votes': int(r.get(button1).decode('utf-8'))
+                    }
+                })
+            elif vote == button2:
+                telemetry.logger.info("Dog Vote", extra={
+                    'custom_dimensions': {
+                        'Vote Type': "Dog",
+                        'Total Votes': int(r.get(button2).decode('utf-8'))
+                    }
+                })
+           
+            return redirect(url_for('index')) 
+           
+    
+    
+    return render_template("index.html", value1=int(vote1), value2=int(vote2), button1=button1, button2=button2, title=title)
 
-            # Return results
-            return render_template("index.html", value1=int(vote1), value2=int(vote2), button1=button1, button2=button2, title=title)
 
 if __name__ == "__main__":
     # TODO: Use the statement below when running locally
