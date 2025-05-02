@@ -40,7 +40,7 @@ class Telemetry:
             # Standard Logging
         logger = logging.getLogger(__name__)
         handler = AzureLogHandler(connection_string=f'{self.connection_string}')
-        handler.setFormatter(logging.Formatter('%(traceId)s %(spanId)s %(message)s'))
+        handler.setFormatter(logging.Formatter('%(message)s'))
         logger.addHandler(handler)
             # Set the logging level
         logger.setLevel(logging.INFO)
