@@ -4,6 +4,11 @@ packages:
   - nginx
   - nodejs
   - npm
+  - python3
+  - python3-pip
+  - build-essential
+  - tcl
+  - wget
 write_files:
   - owner: www-data:www-data
     path: /etc/nginx/sites-available/default
@@ -32,8 +37,21 @@ write_files:
         console.log('Hello world app listening on port 3000!')
       })
 runcmd:
-  - service nginx restart
-  - cd "/home/azureuser/myapp"
-  - npm init
-  - npm install express -y
-  - nodejs index.js
+  - wget https://download.redis.io/releases/redis-7.4.3.tar.gz
+  - tar xzf redis-7.4.3.tar.gz
+  - cd redis-7.4.3
+  - make
+  - make install
+  - src/redis-server --daemonize yes
+
+  # Install Python dependencies
+  - pip3 install redis flask opencensus opencensus-ext-azure opencensus-ext-flask
+
+  # Clone the application repository
+  - git clone --branch Deploy_to_VMSS https://github.com/aliKatlabi/nd081-c4-azure-performance-project-starter.git
+  - cd nd081-c4-azure-performance-project-starter/azure-vote
+
+  # Start the Flask application
+  - gunicorn -w 4 -b 0.0.0.0:8000 main:app
+
+final_message: "The setup is complete. Your application is running."

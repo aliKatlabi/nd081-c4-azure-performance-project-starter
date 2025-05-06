@@ -7,7 +7,7 @@ import sys
 import logging
 from dotenv import load_dotenv
 from telemetry import Telemetry
-load_dotenv()
+()
 
 app = Flask(__name__)
 
@@ -32,9 +32,19 @@ if ("TITLE" in os.environ and os.environ['TITLE']):
 else:
     title = app.config['TITLE']
 
-# Redis Connection
-r = redis.Redis()
+if ("REDIS" in os.environ and os.environ['REDIS']):
+    redis_server = os.environ['REDIS']
+else:
+    redis_server = app.config['REDIS']
 
+# container _ remote server
+
+redis_server = os.getenv('REDIS', 'localhost')
+r = redis.Redis(host=redis_server, port=6379)
+
+# local server debugging 
+
+#r = redis.Redis()
 # Change title to host name to demo NLB
 if app.config['SHOWHOST'] == "true":
     title = socket.gethostname()
@@ -118,4 +128,5 @@ if __name__ == "__main__":
     
     #app.run() 
     # TODO: Use the statement below before deployment to VMSS
-    app.run(host='0.0.0.0', threaded=True, debug=True) # remote
+    host = os.getenv('HOST', 'localhost')
+    app.run(host, port=80, threaded=True, debug=True) # remote

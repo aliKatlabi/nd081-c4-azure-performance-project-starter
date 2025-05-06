@@ -13,16 +13,25 @@ spec:
         app: azure-vote-back
     spec:
       nodeSelector:
-        "beta.kubernetes.io/os": linux
+        "kubernetes.io/os": linux
       containers:
       - name: azure-vote-back
         image: mcr.microsoft.com/oss/bitnami/redis:6.0.8
         env:
         - name: ALLOW_EMPTY_PASSWORD
           value: "yes"
+        - name: HOST
+          value: "0.0.0.0"
         ports:
         - containerPort: 6379
           name: redis
+        resources:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
 ---
 apiVersion: v1
 kind: Service
@@ -54,21 +63,25 @@ spec:
         app: azure-vote-front
     spec:
       nodeSelector:
-        "beta.kubernetes.io/os": linux
+        "kubernetes.io/os": linux
       containers:
       - name: azure-vote-front
         #image: mcr.microsoft.com/azuredocs/azure-vote-front:v1
-        image: myacr202106.azurecr.io/azure-vote-front:v1
+        image: myacr20250503.azurecr.io/azure-vote-front:v1
         ports:
-        - containerPort: 80
+        - containerPort: 8080
         resources:
           requests:
             cpu: 250m
+            memory: 256Mi
           limits:
             cpu: 500m
+            memory: 512Mi
         env:
         - name: REDIS
           value: "azure-vote-back"
+        - name: APPINSIGHTS_CONNECTION_STRING
+          value: "InstrumentationKey=f4246f7d-6e5c-487f-b322-e9d9c8555400;IngestionEndpoint=https://westeurope-5.in.applicationinsights.azure.com/;LiveEndpoint=https://westeurope.livediagnostics.monitor.azure.com/;ApplicationId=d4d1a781-c29a-4171-afbc-616a7ab98c15"
 ---
 apiVersion: v1
 kind: Service

@@ -25,9 +25,16 @@ class CustomFormatter(logging.Formatter):
 
 class Telemetry:
     def __init__(self, app):
-        self.connection_string = os.getenv('APPINSIGHTS_INSTRUMENTATIONKEY', 'default-key')
+
+        app.config.from_pyfile('config_file.cfg')
+        
+        if ("APPINSIGHTS_CONNECTION_STRING" in os.environ and os.environ['APPINSIGHTS_CONNECTION_STRING']):
+            self.connection_string = os.environ['APPINSIGHTS_CONNECTION_STRING']
+        else:
+            self.connection_string = app.config['APPINSIGHTS_CONNECTION_STRING']
+        # Check if the connection string is set
         if not self.connection_string:
-            raise ValueError("Instrumentation key is not set. Please set the APPINSIGHTS_INSTRUMENTATIONKEY environment variable.")
+            raise ValueError("Instrumentation key is not set. Please set the APPINSIGHTS_CONNECTION_STRING environment variable.")
         # Initialize the Flask app with telemetry
         self.logger = self._initialize_logger()
         self.exporter = self._initialize_exporter()
