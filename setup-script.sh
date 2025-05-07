@@ -130,22 +130,24 @@ echo "Network load balancer rule created: $lbRule"
 echo "STEP 7 - Adding port 80 to NSG $nsgName"
 
 az network nsg rule create \
---resource-group $resourceGroup \
---nsg-name $nsgName \
---name Port_80 \
---destination-port-ranges 80 \
---direction Inbound \
---priority 100 \
---verbose
+  --resource-group $resourceGroup \
+  --nsg-name $nsgName \
+  --name Allow_Port_80 \
+  --destination-port-ranges 80 \
+  --direction Inbound \
+  --priority 100 \
+  --access Allow \
+  --protocol Tcp \
+  --verbose
 
 az network nsg rule create \
---resource-group $resourceGroup \
---nsg-name $nsgName \
---name Port_80 \
---destination-port-ranges 80 \
---direction Outbound \
---priority 100 \
---verbose
+  --resource-group $resourceGroup \
+  --nsg-name $nsgName \
+  --name Port_80 \
+  --destination-port-ranges 80 \
+  --direction Outbound \
+  --priority 100 \
+  --verbose
 
 echo "Port 80 added to NSG: $nsgName"
 
@@ -153,22 +155,24 @@ echo "Port 80 added to NSG: $nsgName"
 echo "STEP 8 - Adding port 22 to NSG $nsgName"
 
 az network nsg rule create \
---resource-group $resourceGroup \
---nsg-name $nsgName \
---name Port_22 \
---destination-port-ranges 22 \
---direction Inbound \
---priority 110 \
---verbose
+  --resource-group $resourceGroup \
+  --nsg-name $nsgName \
+  --name Allow_Port_22\
+  --destination-port-ranges 22 \
+  --direction Inbound \
+  --priority 110 \
+  --access Allow \
+  --protocol Tcp \
+  --verbose
 
 az network nsg rule create \
---resource-group $resourceGroup \
---nsg-name $nsgName \
---name Port_22 \
---destination-port-ranges 22 \
---direction Outbound \
---priority 110 \
---verbose
+  --resource-group $resourceGroup \
+  --nsg-name $nsgName \
+  --name Port_22 \
+  --destination-port-ranges 22 \
+  --direction Outbound \
+  --priority 110 \
+  --verbose
 
 echo "Port 22 added to NSG: $nsgName"
 
@@ -220,11 +224,17 @@ az network nsg rule list \
   --output table
 #az network nsg rule list --resource-group cloud_project --nsg-name udacity-vmss-nsg --output table
 
+targetResourceId=$(az vmss list-instances \
+  --resource-group $resourceGroup \
+  --name $vmssName \
+  --query "[0].id" \
+  -o tsv)
+
 
 az network bastion tunnel \
-  --name "vmss-bastion" \
-  --resource-group "cloud_project" \
-  --target-resource-id "/subscriptions/f0c894e3-b3ff-403f-8417-bf591417d5eb/resourceGroups/cloud_project/providers/Microsoft.Compute/virtualMachines/udacity-vmss_7daa217e" \
+  --name $bastionName \
+  --resource-group $resourceGroup \
+  --target-resource-id $targetResourceId \
   --resource-port 22 \
   --port 22 \
   --debug

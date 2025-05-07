@@ -27,12 +27,19 @@ read -p "Enter your choice (1 or 2): " choice
 
 
 # Get the resource ID of the specific VM instance
-targetResourceId=$(az vm show \
--g cloud_project \
---name udacity-vmss_8d1bfe93 \
---query "id" \
--o tsv)
 
+targetResourceId=$(az vmss list-instances \
+  --resource-group $resourceGroup \
+  --name $vmssName \
+  --query "[0].id" \
+  -o tsv)
+
+
+# Check if the targetResourceId is empty
+if [ -z "$targetResourceId" ]; then
+  echo "Error: Unable to retrieve the target resource ID. Please check the VMSS name and resource group."
+  exit 1
+fi
 
 echo "Target Resource ID: $targetResourceId"
 
@@ -51,8 +58,6 @@ if [ "$choice" -eq 1 ]; then
     --port 2222
 
   #az network bastion tunnel --name bastion --resource-group cloud_project --target-resource-id '/subscriptions/f0c894e3-b3ff-403f-8417-bf591417d5eb/resourceGroups/cloud_project/providers/Microsoft.Compute/virtualMachineScaleSets/udacity-vmss' --resource-port 22 --port 22
-
-az network bastion ssh --name "bastion" --resource-group "cloud_project" --target-ip-address "4.180.90.143" --auth-type "password" --username "udacityadmin" 
 
   echo "Tunnel created. Use the following command to copy files or connect via SSH:"
   
